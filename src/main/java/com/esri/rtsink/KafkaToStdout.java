@@ -23,6 +23,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -33,15 +34,17 @@ public class KafkaToStdout {
     
     String brokers;
     String topic;
+    Integer webport;
+    WebServer server;
     
     static final Pattern PATTERN = Pattern.compile("(([^\"][^,]*)|\"([^\"]*)\"),?");
     
     KafkaConsumer<String, String> consumer;    
 
-    public KafkaToStdout(String brokers, String topic) {
+    public KafkaToStdout(String brokers, String topic, Integer webport) {
         this.brokers = brokers;
         this.topic = topic;
-        
+        this.webport = webport;
         
         
         try {
@@ -58,6 +61,9 @@ public class KafkaToStdout {
             props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
             
             consumer = new KafkaConsumer<>(props);
+            
+            server = new WebServer(this.webport);
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,6 +75,16 @@ public class KafkaToStdout {
         // Load mapping here could come from config file or from web service
                      
         try {
+            
+            /*
+                Using PATTERN the parser can handled quoted strings containing commas, For Example
+            
+                Line from faa-stream.csv
+                FAA-Stream,13511116,DLH427,06/22/2013 12:02:00 AM,-55.1166666666667,45.1166666666667,82.660223052638,540,350,A343,DLH,KPHL,EDDF,JET,COMMERCIAL,ACTIVE,GA,"-55.1166666666667,45.1166666666667,350.0"
+
+                
+            
+            */
             ArrayList<String> vals = new ArrayList<String>();
             Matcher matcher = PATTERN.matcher(line); 
             int i = 0;
@@ -82,6 +98,9 @@ public class KafkaToStdout {
                 }
                 i += 1;
             }     
+            
+            /*
+            // This was hard-coded for faa-stream.csv
             String tn = vals.get(2);
             
             DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss aa");
@@ -112,7 +131,52 @@ public class KafkaToStdout {
             combined.put("geom", geomJson);
             
             lineOut = combined.toString();
+            */
+
+            // This section is hard-coded for simFile format 
+            // 1468935966122,138,19-Jul-2016 08:46:06.006,IAH-IAD,-88.368,34.02488,238.75427650928157,57.53489
+
+            Long tm = Long.parseLong(vals.get(0));  // milliseconds from epoch
             
+            Integer id = Integer.parseInt(vals.get(1));  // Unique route id Integer
+            
+            String dtg = vals.get(2);   // Read in Date Time Group String 
+            
+            String rt = vals.get(3);  // Route <Source Airport Code>-<Destination Airport Code>
+            
+            
+
+            JSONObject attrJson = new JSONObject();
+            attrJson.put("tm", tm);
+            attrJson.put("id", id);
+            attrJson.put("dtg", dtg);
+            attrJson.put("rt", rt);
+
+            // Turn lon/lat into GeoJson
+            Double lon = Double.parseDouble(vals.get(4));
+            Double lat = Double.parseDouble(vals.get(5));
+
+            Point pt = new Point(lon, lat);
+
+            SpatialReference sr = SpatialReference.create(4326);
+
+            String geomJsonString = OperatorExportToJson.local().execute(sr, pt);            
+            JSONObject geomJson = new JSONObject(geomJsonString);
+
+            Double speed = Double.parseDouble(vals.get(6));
+            Double bearing = Double.parseDouble(vals.get(7));
+            
+            attrJson.put("spd", speed);  // speed
+            attrJson.put("brg", bearing);  // bearing
+            
+            // Combine the attributes and the geom
+            JSONObject combined = new JSONObject();
+            combined.put("attr", attrJson);
+            combined.put("geom", geomJson);
+            
+            lineOut = combined.toString();
+            
+
             
         } catch (Exception e) {
             lineOut = "{\"error\":\"" + e.getMessage() + "\"";
@@ -137,11 +201,14 @@ public class KafkaToStdout {
         
         while (true) {
             ConsumerRecords<String,String> records = consumer.poll(100);
+            // polls every 100ms
             Long ct = System.currentTimeMillis();
-            if (ct - st > 10000) {
-                // Longer than 10 seconds reset
+            
+            if (ct - st > 30000) {
+                // Longer than 30 seconds reset
                 st = ct;
                 cnt = 0L;
+                server.setCnt(cnt);
                 System.out.println("Reset Cnt");
             }
             for (ConsumerRecord<String, String> record : records) {   
@@ -153,18 +220,39 @@ public class KafkaToStdout {
                     //System.out.println(cnt + ">> " + record.key() + ":" + record.value());
                 }
                 cnt += 1;
+                server.setCnt(cnt);
             }
             //break;
         }
     }
 
     public static void main(String args[]) {
+  
+//        try {
+//            JSONObject obj = new JSONObject();
+//            
+//            JSONArray array = new JSONArray();
+//
+//            
+//            array.put(new String("1.2.3.4"));
+//            array.put(new String("2.3.3.4"));
+//
+//            obj.put("ips", array);
+//
+//            
+//            
+//            
+//            System.out.println(obj.toString());
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        
         
         
-        if (args.length != 2) {
-            System.err.print("Usage: rtsink <broker-list> <topic>\n");
+        if (args.length != 3) {
+            System.err.print("Usage: rtsink <broker-list> <topic> <web-port>\n");
         } else {
-            KafkaToStdout t = new KafkaToStdout(args[0], args[1]);
+            KafkaToStdout t = new KafkaToStdout(args[0], args[1], Integer.parseInt(args[2]));
             t.read();
         }
         
