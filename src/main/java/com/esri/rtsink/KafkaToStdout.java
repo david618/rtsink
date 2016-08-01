@@ -34,6 +34,7 @@ public class KafkaToStdout {
     
     String brokers;
     String topic;
+    String group;
     Integer webport;
     WebServer server;
     
@@ -41,10 +42,12 @@ public class KafkaToStdout {
     
     KafkaConsumer<String, String> consumer;    
 
-    public KafkaToStdout(String brokers, String topic, Integer webport) {
+    public KafkaToStdout(String brokers, String topic, String group, Integer webport) {
         this.brokers = brokers;
         this.topic = topic;
+        this.group = group;
         this.webport = webport;
+        
         
         
         try {
@@ -52,7 +55,7 @@ public class KafkaToStdout {
             Properties props = new Properties();
             props.put("bootstrap.servers",this.brokers);
             // I should include another parameter for group.id this would allow differenct consumers of same topic
-            props.put("group.id", "test2");
+            props.put("group.id", this.group);
             props.put("enable.auto.commit", "true");
             props.put("auto.commit.interval.ms", 1000);
             props.put("auto.offset.reset", "earliest");
@@ -195,34 +198,42 @@ public class KafkaToStdout {
         consumer.subscribe(Arrays.asList(this.topic));
         
         
+        Long lr = System.currentTimeMillis();
         Long st = System.currentTimeMillis();
         
         Long cnt = 0L;
         
         while (true) {
-            ConsumerRecords<String,String> records = consumer.poll(100);
+            ConsumerRecords<String,String> records = consumer.poll(10);
             // polls every 100ms
             Long ct = System.currentTimeMillis();
             
-            if (ct - st > 30000) {
-                // Longer than 30 seconds reset
-                st = ct;
+            if (cnt > 0 && ct - lr > 2000) {
+                // Longer than 2 seconds reset and output stats
+                
+                long delta = lr - st;
+                double rate = 1000.0 * (double) cnt / (double) delta;
+                System.out.println(cnt + "," + rate);
+                
                 cnt = 0L;
                 server.setCnt(cnt);
-                System.out.println("Reset Cnt");
+                
             }
             for (ConsumerRecord<String, String> record : records) {   
-                st = System.currentTimeMillis();
-                if (cnt%1000 == 0) {    
-                    // Only print a message every 1000 times
-                    String lineOut = parseCsvLine(record.value());
-                    System.out.println(cnt + ">> " + record.key() + ":" + lineOut);
-                    //System.out.println(cnt + ">> " + record.key() + ":" + record.value());
+                lr = System.currentTimeMillis();
+//                if (cnt%1000 == 0) {    
+//                    // Only print a message every 1000 times
+//                    String lineOut = parseCsvLine(record.value());
+//                    System.out.println(cnt + ">> " + record.key() + ":" + lineOut);
+//                    //System.out.println(cnt + ">> " + record.key() + ":" + record.value());
+//                }
+                cnt += 1;      
+                if (cnt == 1) {
+                    st = System.currentTimeMillis();
                 }
-                cnt += 1;
-                server.setCnt(cnt);
             }
-            //break;
+            server.setCnt(cnt);
+            
         }
     }
 
@@ -249,10 +260,10 @@ public class KafkaToStdout {
 //        
         
         
-        if (args.length != 3) {
-            System.err.print("Usage: rtsink <broker-list> <topic> <web-port>\n");
+        if (args.length != 4) {
+            System.err.print("Usage: rtsink <broker-list> <topic> <group-id> <web-port>\n");
         } else {
-            KafkaToStdout t = new KafkaToStdout(args[0], args[1], Integer.parseInt(args[2]));
+            KafkaToStdout t = new KafkaToStdout(args[0], args[1], args[2], Integer.parseInt(args[3]));
             t.read();
         }
         
