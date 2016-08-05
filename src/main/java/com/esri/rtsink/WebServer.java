@@ -24,6 +24,14 @@ public class WebServer {
         cntHandler.setCnt(cnt);
     }
     
+    public void setRate(double rate) {
+        cntHandler.setRate(rate);
+    }    
+    
+    public void setTm(long tm) {
+        cntHandler.setTm(tm);
+    }
+    
     public WebServer(int port) {
 
         this.port = port;
