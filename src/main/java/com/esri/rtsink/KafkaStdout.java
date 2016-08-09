@@ -222,13 +222,13 @@ public class KafkaStdout {
             
             for (ConsumerRecord<String, String> record : records) {   
                 lr = System.currentTimeMillis();
-                String lineOut = parseCsvLine(record.value());
-//                if (cnt%1000 == 0) {    
-//                    // Only print a message every 1000 times
-//                    //String lineOut = parseCsvLine(record.value());
-//                    System.out.println(cnt + ">> " + record.key() + ":" + lineOut);
-//                    //System.out.println(cnt + ">> " + record.key() + ":" + record.value());
-//                }
+//                String lineOut = parseCsvLine(record.value());
+                if (cnt%1000 == 0) {    
+                    // Only print a message every 1000 times
+                    String lineOut = parseCsvLine(record.value());
+                    System.out.println(cnt + ">> " + record.key() + ":" + lineOut);
+                    //System.out.println(cnt + ">> " + record.key() + ":" + record.value());
+                }
                 cnt += 1;      
                 if (cnt == 1) {
                     st = System.currentTimeMillis();
@@ -239,7 +239,7 @@ public class KafkaStdout {
         }
     }
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws Exception {
           // Example Command Line Args: d1.trinity.dev:9092 simFile group1 9001
 //        try {
 //            JSONObject obj = new JSONObject();
@@ -265,12 +265,21 @@ public class KafkaStdout {
         if (args.length != 4) {
             System.err.print("Usage: rtsink <broker-list> <topic> <group-id> <web-port>\n");
         } else {
-            KafkaStdout t = new KafkaStdout(args[0], args[1], args[2], Integer.parseInt(args[3]));
+            
+            String brokers = args[0];
+            
+            String brokerSplit[] = brokers.split(":");
+            
+            if (brokerSplit.length == 1) {
+                // Try hub name. Name cannot have a ':' and brokers must have it.
+                brokers = new MarathonInfo().getBrokers(brokers);
+            }   // Otherwise assume it's brokers 
+                        
+            
+            KafkaStdout t = new KafkaStdout(brokers, args[1], args[2], Integer.parseInt(args[3]));
             t.read();
         }
         
-        //KafkaToStdout t = new KafkaCnt("d1.trinity.dev:9092", "faa-stream");
-        //t.read();
         
 
         

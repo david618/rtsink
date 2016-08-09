@@ -109,7 +109,7 @@ public class KafkaCnt {
         }
     }
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws Exception {
           // Example Command Line Args: d1.trinity.dev:9092 simFile group1 9001
 //        try {
 //            JSONObject obj = new JSONObject();
@@ -133,14 +133,24 @@ public class KafkaCnt {
         
         
         if (args.length != 4) {
-            System.err.print("Usage: rtsink <broker-list> <topic> <group-id> <web-port>\n");
+            System.err.print("Usage: rtsink <broker-list-or-hub-name> <topic> <group-id> <web-port>\n");
         } else {
-            KafkaCnt t = new KafkaCnt(args[0], args[1], args[2], Integer.parseInt(args[3]));
+            
+            String brokers = args[0];
+            
+            String brokerSplit[] = brokers.split(":");
+            
+            if (brokerSplit.length == 1) {
+                // Try hub name. Name cannot have a ':' and brokers must have it.
+                brokers = new MarathonInfo().getBrokers(brokers);
+            }   // Otherwise assume it's brokers 
+            
+            
+            KafkaCnt t = new KafkaCnt(brokers, args[1], args[2], Integer.parseInt(args[3]));
             t.read();
         }
         
-        //KafkaToStdout t = new KafkaCnt("d1.trinity.dev:9092", "faa-stream");
-        //t.read();
+
         
 
         

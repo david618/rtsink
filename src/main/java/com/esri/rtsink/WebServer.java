@@ -18,18 +18,18 @@ public class WebServer {
     private final int port;
     HttpContext cntContext;
     
-    CountHandler cntHandler;
+    RootHandler rootHandler;
     
     public void setCnt(long cnt) {
-        cntHandler.setCnt(cnt);
+        rootHandler.setCnt(cnt);
     }
     
     public void setRate(double rate) {
-        cntHandler.setRate(rate);
+        rootHandler.setRate(rate);
     }    
     
     public void setTm(long tm) {
-        cntHandler.setTm(tm);
+        rootHandler.setTm(tm);
     }
     
     public WebServer(int port) {
@@ -39,10 +39,10 @@ public class WebServer {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/", new RootHandler());
-            cntHandler = new CountHandler();
-            server.createContext("/count", cntHandler);
-            server.createContext("/ip", new GetIp());
-            
+//            cntHandler = new CountHandler();
+//            server.createContext("/count", cntHandler);
+//            server.createContext("/ip", new GetIp());
+//            server.createContext("/reset", new ResetHandler());
             server.start();
 
         } catch (Exception e) {

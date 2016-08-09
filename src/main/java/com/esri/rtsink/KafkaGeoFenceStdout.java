@@ -385,7 +385,7 @@ public class KafkaGeoFenceStdout {
         return isLoaded;
     }
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws Exception {
 
         // Example params: d1.trinity.dev:9092 simFile group1 http://m1.trinity.dev/airports1000FS.json iata_faa 9001
         
@@ -394,6 +394,17 @@ public class KafkaGeoFenceStdout {
         if (args.length != 6) {
             System.err.print("Usage: KafkaGeoFenceStdout <broker-list> <topic> <group-id> <url-esri-json-fences> <geotag-field> <web-port>\n");
         } else {
+            
+            String brokers = args[0];
+            
+            String brokerSplit[] = brokers.split(":");
+            
+            if (brokerSplit.length == 1) {
+                // Try hub name. Name cannot have a ':' and brokers must have it.
+                brokers = new MarathonInfo().getBrokers(brokers);
+            }   // Otherwise assume it's brokers 
+                     
+            
             KafkaGeoFenceStdout t = new KafkaGeoFenceStdout(args[0], args[1], args[2], args[3], args[4], Integer.parseInt(args[5]));
 
             t.read();
