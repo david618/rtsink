@@ -5,6 +5,7 @@
  */
 package com.esri.rtsink;
 
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +16,11 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.PartitionInfo;
 
-
 /**
  *
  * @author david
  */
-public class KafkaCnt {
+public class KafkaCsvToJsonStdout {
     
     String brokers;
     String topic;
@@ -32,7 +32,7 @@ public class KafkaCnt {
     
     KafkaConsumer<String, String> consumer;    
 
-    public KafkaCnt(String brokers, String topic, String group, Integer webport) {
+    public KafkaCsvToJsonStdout(String brokers, String topic, String group, Integer webport) {
         this.brokers = brokers;
         this.topic = topic;
         this.group = group;
@@ -63,13 +63,21 @@ public class KafkaCnt {
     }
     
     
-    public void read() {
+    
+    public void read(String topic, int everyNthLine) {
         
         Map<String,List<PartitionInfo>> topics = consumer.listTopics();
        
         
         consumer.subscribe(Arrays.asList(this.topic));
         
+        
+        CsvJsonParser parser = null;
+        if (topic.equalsIgnoreCase("faa-stream")) {
+            parser = new CsvJsonFaaStream();
+        } else if (topic.equalsIgnoreCase("simFile")) {
+            parser = new CsvJsonSimFile();
+        }                              
         
         Long lr = System.currentTimeMillis();
         Long st = System.currentTimeMillis();
@@ -78,62 +86,45 @@ public class KafkaCnt {
         
         while (true) {
             ConsumerRecords<String,String> records = consumer.poll(10);
-            // polls every 10ms
+            // polls every 100ms
             Long ct = System.currentTimeMillis();
             
-            if (cnt > 0 && ct - lr > 5000) {
+            if (cnt > 0 && ct - lr > 2000) {
                 // Longer than 2 seconds reset and output stats
                 
                 long delta = lr - st;
                 double rate = 1000.0 * (double) cnt / (double) delta;
                 System.out.println(cnt + "," + rate);
                 
-                server.setRate(rate);
-                server.setTm(System.currentTimeMillis());
-                server.setCnt(cnt);
-                cnt = 0L;                
-                
+                cnt = 0L;
+                //server.setCnt(cnt);
                 
             }
             
             for (ConsumerRecord<String, String> record : records) {   
                 lr = System.currentTimeMillis();
+                String lineOut = parser.parseCsvLine(record.value());
+                if (cnt%everyNthLine == 0) {    
+                    // Only print a message every 1000 times                    
+                    System.out.println(cnt + ">> " + record.key() + ":" + lineOut);
+                    //System.out.println(cnt + ">> " + record.key() + ":" + record.value());
+                }
                 cnt += 1;      
                 if (cnt == 1) {
                     st = System.currentTimeMillis();
                 }
-                
             }
-            
+            server.setCnt(cnt);
             
         }
     }
 
     public static void main(String args[]) throws Exception {
-          // Example Command Line Args: d1.trinity.dev:9092 simFile group1 9001
-//        try {
-//            JSONObject obj = new JSONObject();
-//            
-//            JSONArray array = new JSONArray();
-//
-//            
-//            array.put(new String("1.2.3.4"));
-//            array.put(new String("2.3.3.4"));
-//
-//            obj.put("ips", array);
-//
-//            
-//            
-//            
-//            System.out.println(obj.toString());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        
         
+        // Example Arguments: 
         
-        if (args.length != 4) {
-            System.err.print("Usage: rtsink <broker-list-or-hub-name> <topic> <group-id> <web-port>\n");
+        if (args.length != 5) {
+            System.err.print("Usage: KafkaStdout <broker-list> <topic> <group-id> <every-nth-line> <web-port>\n");
         } else {
             
             String brokers = args[0];
@@ -144,13 +135,12 @@ public class KafkaCnt {
                 // Try hub name. Name cannot have a ':' and brokers must have it.
                 brokers = new MarathonInfo().getBrokers(brokers);
             }   // Otherwise assume it's brokers 
+                        
             
-            
-            KafkaCnt t = new KafkaCnt(brokers, args[1], args[2], Integer.parseInt(args[3]));
-            t.read();
+            KafkaCsvToJsonStdout t = new KafkaCsvToJsonStdout(brokers, args[1], args[2], Integer.parseInt(args[4]));
+            t.read(args[1], Integer.parseInt(args[3]));
         }
         
-
         
 
         

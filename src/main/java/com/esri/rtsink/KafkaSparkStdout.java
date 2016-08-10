@@ -92,6 +92,31 @@ public class KafkaSparkStdout {
 
     public static void main(String args[]) throws Exception {
 
+        /*
+          /opt/spark/bin/spark-submit --class com.esri.rtsink.KafkaSparkStdout
+        --master mesos://spark-dispatcher.marathon.mesos:7077
+        --deploy-mode cluster http://m1.trinity.dev/0.10.0.0/rtsink-jar-with-dependencies.jar 
+        d1.trinity.dev:9092 simFile group1 9002        
+        
+        /opt/spark/bin/spark-submit --class org.apache.spark.examples.SparkPi --master mesos://master.mesos:5050 spark-examples_2.11-1.6.1.jar 100 3
+        
+        
+        /opt/spark/bin/spark-submit --class com.esri.rtsink.KafkaSparkStdout 
+        --master mesos://master.mesos:5050 rtsink-jar-with-dependencies.jar 
+        d1.trinity.dev:9092 simFile group2 9002      
+        
+        Marathon:        
+        CMD: $MESOS_SANDBOX/spark/bin/spark-submit --class org.apache.spark.examples.SparkPi --master local[4] $MESOS_SANDBOX/spark-examples_2.11-1.6.1.jar 100 3; tail -f /var/log/messages 
+        URIs:  http://master.mesos/spark-examples.tgz, http://master.mesos/spark.tgz
+        
+        spark.tgz was customized with executor uri set 
+        spark.executor.uri http://m1.trinity.dev/spark-1.6.1-bin-hadoop2.6_2.11.tgz
+        
+        
+        
+        */
+        
+        
         // Example parameters: d1.trinity.dev:9092 simFile group1 9002
         if (args.length != 4) {
             System.err.print("Usage: KafkaSparkStdout <broker-list> <topic> <group-id> <web-port>\n");
@@ -104,7 +129,15 @@ public class KafkaSparkStdout {
 //        Integer webport = 9002;
         String brokers = args[0];
         String topics = args[1];
-        String groupId = args[2];
+        String groupId = args[2];        
+            
+        String brokerSplit[] = brokers.split(":");
+
+        if (brokerSplit.length == 1) {
+            // Try hub name. Name cannot have a ':' and brokers must have it.
+            brokers = new MarathonInfo().getBrokers(brokers);
+        }   // Otherwise assume it's brokers         
+        
         Integer webport = 0;
         try {
             webport = Integer.parseInt(args[3]);
@@ -167,7 +200,7 @@ public class KafkaSparkStdout {
         lines.foreachRDD(
                 new Function2<JavaRDD<String>, Time, Void>() {
             @Override
-            public Void call(JavaRDD<String> t1, Time t2) throws Exception {
+            public Void call(JavaRDD<String> t1, Time t2) throws Exception {                        
                 Long t1Cnt = t1.count();
                 //System.out.println("Processed: " + t1Cnt);
                 
@@ -200,26 +233,26 @@ public class KafkaSparkStdout {
 //            }
 //        });
 //************ Original code form KafkaWordCount (worked) *******************
-//        JavaDStream<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
-//            @Override
-//            public Iterable<String> call(String x) {
-//                return Lists.newArrayList(SPACE.split(x));
-//            }
-//        });
-//        JavaPairDStream<String, Integer> wordCounts = words.mapToPair(
-//                new PairFunction<String, String, Integer>() {
-//            @Override
-//            public Tuple2<String, Integer> call(String s) {
-//                return new Tuple2<String, Integer>(s, 1);
-//            }
-//        }).reduceByKey(
-//                        new Function2<Integer, Integer, Integer>() {
-//                    @Override
-//                    public Integer call(Integer i1, Integer i2) {
-//                        return i1 + i2;
-//                    }
-//                });
-//        wordCounts.print();
+        JavaDStream<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
+            @Override
+            public Iterable<String> call(String x) {
+                return Lists.newArrayList(SPACE.split(x));
+            }
+        });
+        JavaPairDStream<String, Integer> wordCounts = words.mapToPair(
+                new PairFunction<String, String, Integer>() {
+            @Override
+            public Tuple2<String, Integer> call(String s) {
+                return new Tuple2<String, Integer>(s, 1);
+            }
+        }).reduceByKey(
+                        new Function2<Integer, Integer, Integer>() {
+                    @Override
+                    public Integer call(Integer i1, Integer i2) {
+                        return i1 + i2;
+                    }
+                });
+        wordCounts.print();
 
         jssc.start();
         jssc.awaitTermination();
