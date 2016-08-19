@@ -170,7 +170,7 @@ public class KafkaSparkStdout {
         kss.startWebServer(webport);
         
 
-        SparkConf sparkConf = new SparkConf().setMaster("local[2]").setAppName(appName);
+        SparkConf sparkConf = new SparkConf().setAppName(appName);
         JavaStreamingContext jssc = new JavaStreamingContext(sparkConf, Durations.milliseconds(100L));
 
         HashSet<String> topicsSet = new HashSet<String>(Arrays.asList(topics.split(",")));
@@ -233,26 +233,26 @@ public class KafkaSparkStdout {
 //            }
 //        });
 //************ Original code form KafkaWordCount (worked) *******************
-        JavaDStream<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
-            @Override
-            public Iterable<String> call(String x) {
-                return Lists.newArrayList(SPACE.split(x));
-            }
-        });
-        JavaPairDStream<String, Integer> wordCounts = words.mapToPair(
-                new PairFunction<String, String, Integer>() {
-            @Override
-            public Tuple2<String, Integer> call(String s) {
-                return new Tuple2<String, Integer>(s, 1);
-            }
-        }).reduceByKey(
-                        new Function2<Integer, Integer, Integer>() {
-                    @Override
-                    public Integer call(Integer i1, Integer i2) {
-                        return i1 + i2;
-                    }
-                });
-        wordCounts.print();
+//        JavaDStream<String> words = lines.flatMap(new FlatMapFunction<String, String>() {
+//            @Override
+//            public Iterable<String> call(String x) {
+//                return Lists.newArrayList(SPACE.split(x));
+//            }
+//        });
+//        JavaPairDStream<String, Integer> wordCounts = words.mapToPair(
+//                new PairFunction<String, String, Integer>() {
+//            @Override
+//            public Tuple2<String, Integer> call(String s) {
+//                return new Tuple2<String, Integer>(s, 1);
+//            }
+//        }).reduceByKey(
+//                        new Function2<Integer, Integer, Integer>() {
+//                    @Override
+//                    public Integer call(Integer i1, Integer i2) {
+//                        return i1 + i2;
+//                    }
+//                });
+//        wordCounts.print();
 
         jssc.start();
         jssc.awaitTermination();
