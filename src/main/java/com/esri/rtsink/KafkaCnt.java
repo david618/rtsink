@@ -102,10 +102,7 @@ public class KafkaCnt {
                 if (cnt == 1) {
                     st = System.currentTimeMillis();
                 }
-                
             }
-            
-            
         }
     }
 
