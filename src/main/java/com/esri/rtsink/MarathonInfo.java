@@ -14,7 +14,6 @@ import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.apache.spark.sql.execution.Except;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -66,13 +65,52 @@ public class MarathonInfo {
             }
             addresses += ta;
             i++;
+        }
+        return addresses;
+    }
 
+    public String getElasticSearchHttpAddresses(String esAppName) throws Exception {
+        String addresses = "";
+
+        // Since no port was specified assume this is a hub name
+        String url = "http://leader.mesos/service/" + esAppName + "/v1/tasks";
+        //System.out.println(url);
+
+        // Support for https
+        SSLContextBuilder builder = new SSLContextBuilder();
+        builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+        SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+                builder.build());
+        CloseableHttpClient httpclient = HttpClients.custom().setSSLSocketFactory(
+                sslsf).build();
+
+        HttpGet request = new HttpGet(url);
+
+        HttpResponse response = httpclient.execute(request);
+        BufferedReader rd = new BufferedReader(
+                new InputStreamReader(response.getEntity().getContent()));
+
+        StringBuffer result = new StringBuffer();
+        String line = "";
+        while ((line = rd.readLine()) != null) {
+            result.append(line);
         }
 
+        //System.out.println(result);
 
+        JSONArray json = new JSONArray(result.toString());
 
-
-
+        int i = 0;
+        while (i < json.length()) {
+            JSONObject item = json.getJSONObject(i);
+            String ta = item.getString("http_address");
+            //System.out.println(ta);
+            if (i > 0) {
+                addresses += ",";
+            }
+            addresses += ta;
+            i++;
+        }
         return addresses;
     }
 
@@ -205,7 +243,7 @@ public class MarathonInfo {
 
     public static void main(String args[]) throws Exception {
         MarathonInfo t = new MarathonInfo();
-        String nm = t.getElasticSearchTransportAddresses("es1");
+        String nm = t.getElasticSearchClusterName("es1");
         System.out.println(nm);
     }
 

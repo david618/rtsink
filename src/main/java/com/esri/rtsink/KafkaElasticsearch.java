@@ -1,5 +1,6 @@
 package com.esri.rtsink;
 
+import javafx.print.Printer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -31,6 +32,8 @@ public class KafkaElasticsearch {
     String index;
     String typ;
     Integer esbulk;
+    Integer webport;
+    WebServer server;
 
     static final Pattern PATTERN = Pattern.compile("(([^\"][^,]*)|\"([^\"]*)\"),?");
 
@@ -38,7 +41,7 @@ public class KafkaElasticsearch {
 
     Client client;
 
-    public KafkaElasticsearch(String brokers, String topic, String group, String esnodes, String clusterName, String index, String typ, String esbulk) {
+    public KafkaElasticsearch(String brokers, String topic, String group, String esnodes, String clusterName, String index, String typ, Integer esbulk, Integer webport) {
         this.brokers = brokers;
         this.topic = topic;
         this.group = group;
@@ -46,7 +49,9 @@ public class KafkaElasticsearch {
         this.clusterName = clusterName;
         this.index = index;
         this.typ = typ;
-        this.esbulk = Integer.parseInt(esbulk);
+        this.esbulk = esbulk;
+        this.webport = webport;
+
 
 
         try {
@@ -80,6 +85,9 @@ public class KafkaElasticsearch {
             }
 
             this.client = (Client) tc;
+
+
+            server = new WebServer(this.webport);
 
             //System.out.println(this.client);
 
@@ -117,6 +125,9 @@ public class KafkaElasticsearch {
                 double rate = 1000.0 * (double) cnt / (double) delta;
                 System.out.println(cnt + "," + rate);
 
+                server.setRate(rate);
+                server.setTm(System.currentTimeMillis());
+                server.setCnt(cnt);
                 cnt = 0L;
             }
 
@@ -138,12 +149,16 @@ public class KafkaElasticsearch {
     }
 
     public static void main(String args[]) throws Exception {
-        // Example Arguments: a1:9092 simFile2 group3 a2:9300 elasticsearch sink simfile2 1000
+        // Example Arguments: a1:9092 simFile2 group3 a2:9300 elasticsearch sink simfile2 1000 16001
+        // Example Arguments: hub2 simFile2 group3 elasticsearch - sink simfile2 1000
+
+        // You can specify the Marthon name of Elasticsearch and the app looks up ips of tasks; then - for clusterName to look that up too
+
 
         int numArgs = args.length;
 
-        if (numArgs != 8) {
-            System.err.print("Usage: KafkaElasticsearch <broker-list> <topic> <group-id> <es-transport-nodes> <clusterName> <indx> <typ> <es-bulk> \n");
+        if (numArgs != 9) {
+            System.err.print("Usage: KafkaElasticsearch <broker-list> <topic> <group-id> <es-transport-nodes> <clusterName> <indx> <typ> <es-bulk> <web-port> \n");
         } else {
 
 
@@ -154,15 +169,28 @@ public class KafkaElasticsearch {
             String clusterName = args[4];
             String index = args[5];
             String typ = args[6];
-            String bulk = args[7];
+            Integer bulk = Integer.parseInt(args[7]);
+            Integer webport = Integer.parseInt(args[8]);
 
             String brokerSplit[] = brokers.split(":");
-
             if (brokerSplit.length == 1) {
                 // Try hub name. Name cannot have a ':' and brokers must have it.
                 brokers = new MarathonInfo().getBrokers(brokers);
             }   // Otherwise assume it's brokers
 
+            String esnodesSplit[] = esnodes.split(":");
+            if (esnodesSplit.length == 1) {
+                MarathonInfo mi = new MarathonInfo();
+                if (clusterName.equalsIgnoreCase("-")) {
+                    clusterName = mi.getElasticSearchClusterName(esnodes);
+                }
+
+                // Try hub name. Name cannot have a ':' and brokers must have it.
+                esnodes = mi.getElasticSearchTransportAddresses(esnodes);
+
+
+
+            }   // Otherwise assume it's brokers
 
             KafkaElasticsearch t = null;
 
@@ -171,11 +199,14 @@ public class KafkaElasticsearch {
             System.out.println(topic);
             System.out.println(groupId);
             System.out.println(esnodes);
+            System.out.println(clusterName);
             System.out.println(index);
             System.out.println(typ);
+            System.out.println(bulk);
+            System.out.println(webport);
 
 
-            t = new KafkaElasticsearch(brokers,topic,groupId,esnodes,clusterName,index,typ,bulk);
+            t = new KafkaElasticsearch(brokers,topic,groupId,esnodes,clusterName,index,typ,bulk,webport);
             t.read();
 
         }
