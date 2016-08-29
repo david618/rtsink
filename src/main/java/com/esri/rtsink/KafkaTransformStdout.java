@@ -81,13 +81,15 @@ public class KafkaTransformStdout {
         } else if (filterId.equalsIgnoreCase("simFile")) {
             transformer = new TransformSimFile();
         } else if (filterId.equalsIgnoreCase("geotagSimFile")) {
-            transformer = new TransformGeotagSimFile("http://m1/apps/airports1000FS.json", "iata_faa");
+            transformer = new TransformGeotagSimFile();
         }       
         
         if (transformer == null) throw new Exception("Transformmer not defined");
         
         Long lr = System.currentTimeMillis();
         Long st = System.currentTimeMillis();
+
+
         
         Long cnt = 0L;
         

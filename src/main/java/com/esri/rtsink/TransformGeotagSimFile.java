@@ -12,10 +12,8 @@ import com.esri.core.geometry.OperatorImportFromJson;
 import com.esri.core.geometry.OperatorWithin;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.SpatialReference;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+
+import java.io.*;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -54,17 +52,39 @@ public class TransformGeotagSimFile implements Transform {
     KafkaConsumer<String, String> consumer;
 
     private HashMap<String, Geometry> polysMap = new HashMap<>();
+
+    Properties prop = new Properties();
+    InputStream input = null;
     
-    
-    public TransformGeotagSimFile(String fenceUrl, String fieldName) {
-        this.fenceUrl = fenceUrl;
-        this.fieldName = fieldName;
+    public TransformGeotagSimFile() throws Exception {
+
+        String filename = "config.properties";
+        input = new FileInputStream(this.getClass().getName() + ".properties");
+        ///input = TransformGeotagSimFile.class.getClassLoader().getResourceAsStream(filename);
+        if(input==null){
+            System.out.println("Sorry, unable to find " + filename);
+            return;
+        }
+
+        //load a properties file from class path, inside static method
+        prop.load(input);
+
+        // Change this app so that fenceURL and fieldName come from Environment or Config file
+
+        this.fenceUrl = prop.getProperty("fenceUrl");
+        this.fieldName = prop.getProperty("fieldName");
+
+        System.out.println(this.fenceUrl);
+        System.out.println(this.fieldName);
+
         try {        
             loadFences(this.fenceUrl, this.fieldName);
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        throw new Exception("TEST");
     }
 
    
@@ -294,7 +314,7 @@ public class TransformGeotagSimFile implements Transform {
     public static void main(String args[]) throws Exception {
         
         
-        TransformGeotagSimFile t = new TransformGeotagSimFile("http://m1/apps/airports1000FS.json", "iata_faa");
+        TransformGeotagSimFile t = new TransformGeotagSimFile();
         
         FileReader fr = new FileReader("C:\\Users\\davi5017\\Documents\\NetBeansProjects\\Simulator\\simFile_1000_10s.dat");
         BufferedReader br = new BufferedReader(fr);
