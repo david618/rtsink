@@ -13,12 +13,18 @@ import java.util.Properties;
 import java.util.regex.Pattern;
 
 import org.apache.kafka.common.PartitionInfo;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.unit.ByteSizeUnit;
+import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.unit.TimeValue;
 
 /**
  * Created by david on 8/20/2016.
@@ -107,7 +113,31 @@ public class KafkaElasticsearch {
 
         Long cnt = 0L;
 
-        BulkRequestBuilder bulkRequest = client.prepareBulk();
+        BulkProcessor bulkProcessor = BulkProcessor.builder(
+                client,
+                new BulkProcessor.Listener() {
+                    @Override
+                    public void beforeBulk(long executionId,
+                                           BulkRequest request) {  }
+
+                    @Override
+                    public void afterBulk(long executionId,
+                                          BulkRequest request,
+                                          BulkResponse response) {  }
+
+                    @Override
+                    public void afterBulk(long executionId,
+                                          BulkRequest request,
+                                          Throwable failure) {  }
+                })
+                .setBulkActions(this.esbulk)
+                .setBulkSize(new ByteSizeValue(1, ByteSizeUnit.GB))
+                .setFlushInterval(TimeValue.timeValueSeconds(5))
+                .setConcurrentRequests(1)
+                .build();
+
+
+        //BulkRequestBuilder bulkRequest = client.prepareBulk();
 
         while (true) {
             ConsumerRecords<String,String> records = consumer.poll(10);
@@ -116,9 +146,32 @@ public class KafkaElasticsearch {
 
             if (cnt > 0 && ct - lr > 5000) {
                 // Send the remaining items to elastic search
-                if (bulkRequest.numberOfActions() > 0) {
-                    BulkResponse bulkResponse = bulkRequest.get();
-                }
+//                if (bulkRequest.numberOfActions() > 0) {
+//                    BulkResponse bulkResponse = bulkRequest.get();
+//                }
+                bulkProcessor.close();
+                bulkProcessor = BulkProcessor.builder(
+                        client,
+                        new BulkProcessor.Listener() {
+                            @Override
+                            public void beforeBulk(long executionId,
+                                                   BulkRequest request) {  }
+
+                            @Override
+                            public void afterBulk(long executionId,
+                                                  BulkRequest request,
+                                                  BulkResponse response) {  }
+
+                            @Override
+                            public void afterBulk(long executionId,
+                                                  BulkRequest request,
+                                                  Throwable failure) {  }
+                        })
+                        .setBulkActions(this.esbulk)
+                        .setBulkSize(new ByteSizeValue(1, ByteSizeUnit.GB))
+                        .setFlushInterval(TimeValue.timeValueSeconds(5))
+                        .setConcurrentRequests(1)
+                        .build();
 
                 // Longer than 5 seconds reset and output stats
                 long delta = lr - st;
@@ -138,12 +191,15 @@ public class KafkaElasticsearch {
                 if (cnt == 1) {
                     st = System.currentTimeMillis();
                 }
-                bulkRequest.add(client.prepareIndex(this.index, typ).setSource(record.value()));
 
-                if (cnt % this.esbulk == 0) {
-                    BulkResponse bulkResponse = bulkRequest.get();
-                    bulkRequest = client.prepareBulk();
-                }
+                bulkProcessor.add(new IndexRequest(this.index, this.typ).source(record.value()));
+//                bulkRequest.add(client.prepareIndex(this.index, typ).setSource(record.value()));
+//
+//                if (cnt % this.esbulk == 0) {
+//                    BulkResponse bulkResponse = bulkRequest.get();
+//                    bulkRequest = client.prepareBulk();
+//
+//                }
             }
         }
     }
