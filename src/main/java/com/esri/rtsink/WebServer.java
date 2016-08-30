@@ -21,11 +21,11 @@ public class WebServer {
     RootHandler rootHandler;
     
     public void setCnt(long cnt) {
-        rootHandler.setCnt(cnt);
+        rootHandler.addCnt(cnt);
     }
     
     public void setRate(double rate) {
-        rootHandler.setRate(rate);
+        rootHandler.addRate(rate);
     }    
     
     public void setTm(long tm) {

@@ -7,6 +7,8 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+
 import org.json.JSONObject;
 
 /**
@@ -15,22 +17,22 @@ import org.json.JSONObject;
  */
 public class RootHandler implements HttpHandler {
 
-    static long cnt = 0;
-    static double rate = 0;
+    static ArrayList<Long> cnts = new ArrayList<>();
+    static ArrayList<Double> rates = new ArrayList<>();
     static long tm = System.currentTimeMillis();    
     
     public static void reset() {
-        cnt = 0;
-        rate = 0.0;
+        cnts = new ArrayList<>();
+        rates = new ArrayList<>();
         tm = System.currentTimeMillis();
     }    
     
-    public static void setCnt(long cnt) {
-        RootHandler.cnt = cnt;
+    public static void addCnt(long cnt) {
+        cnts.add(cnt);
     }
 
-    public static void setRate(double rate) {
-        RootHandler.rate = rate;
+    public static void addRate(double rate) {
+        rates.add(rate);
     }
 
     public static void setTm(long tm) {
@@ -50,8 +52,8 @@ public class RootHandler implements HttpHandler {
                 // Return count
                 obj.put("tm", tm);
                 // Add additional code for health check
-                obj.put("count", cnt);    
-                obj.put("rate", rate);                
+                obj.put("counts", cnts.toArray());
+                obj.put("rates", rates.toArray());
             } else if (uriPath.equalsIgnoreCase("/reset") || uriPath.equalsIgnoreCase("/reset/")) {
                 // Reset counts
                 reset();
