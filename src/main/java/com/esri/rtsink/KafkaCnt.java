@@ -88,9 +88,9 @@ public class KafkaCnt {
                 double rate = 1000.0 * (double) cnt / (double) delta;
                 System.out.println(cnt + "," + rate);
                 
-                server.setRate(rate);
+                server.addRate(rate);
                 server.setTm(System.currentTimeMillis());
-                server.setCnt(cnt);
+                server.addCnt(cnt);
                 cnt = 0L;                
                 
                 

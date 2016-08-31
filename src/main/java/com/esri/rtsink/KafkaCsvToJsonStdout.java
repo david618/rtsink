@@ -114,7 +114,7 @@ public class KafkaCsvToJsonStdout {
                     st = System.currentTimeMillis();
                 }
             }
-            server.setCnt(cnt);
+            server.addCnt(cnt);
             
         }
     }
