@@ -18,6 +18,5 @@ package com.esri.rtsink;
  */
 public interface Transform {
     public String transform(String line);
-    public String transform(String line, boolean filter);
 
 }

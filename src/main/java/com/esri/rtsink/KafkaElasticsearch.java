@@ -1,6 +1,9 @@
+/*
+ Consume a Kafka topic and write lines to Elasticsearch.  Assumes the elements from Kafka are Json Strings suitable for loading into Elasticsearch.
+
+ */
 package com.esri.rtsink;
 
-import javafx.print.Printer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -178,9 +181,9 @@ public class KafkaElasticsearch {
                 double rate = 1000.0 * (double) cnt / (double) delta;
                 System.out.println(cnt + "," + rate);
 
-                server.setRate(rate);
+                server.addRate(rate);
                 server.setTm(System.currentTimeMillis());
-                server.setCnt(cnt);
+                server.addCnt(cnt);
                 cnt = 0L;
             }
 

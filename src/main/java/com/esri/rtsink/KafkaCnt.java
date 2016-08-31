@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ Consume a Kafka topic and count lines as they appear.
  */
 package com.esri.rtsink;
 
@@ -107,28 +105,8 @@ public class KafkaCnt {
     }
 
     public static void main(String args[]) throws Exception {
-          // Example Command Line Args: d1.trinity.dev:9092 simFile group1 9001
-//        try {
-//            JSONObject obj = new JSONObject();
-//            
-//            JSONArray array = new JSONArray();
-//
-//            
-//            array.put(new String("1.2.3.4"));
-//            array.put(new String("2.3.3.4"));
-//
-//            obj.put("ips", array);
-//
-//            
-//            
-//            
-//            System.out.println(obj.toString());
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        
-        
-        
+          // Example Command Line Args: a1:9092 simFile group1 9001
+
         if (args.length != 4) {
             System.err.print("Usage: rtsink <broker-list-or-hub-name> <topic> <group-id> <web-port>\n");
         } else {
@@ -146,9 +124,6 @@ public class KafkaCnt {
             KafkaCnt t = new KafkaCnt(brokers, args[1], args[2], Integer.parseInt(args[3]));
             t.read();
         }
-        
-
-        
 
         
     }    

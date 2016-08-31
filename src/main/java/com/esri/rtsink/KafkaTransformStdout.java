@@ -1,7 +1,8 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+    Consumes a Kafka Topic and applies a transformation (implementation of Transform Interface) to the line from Kafka then prints to Stdout the transformed line.
+
+    Sample implementation of Transform interface TransformSimFile, TransformGeotagSimFile
+
  */
 package com.esri.rtsink;
 
@@ -68,7 +69,7 @@ public class KafkaTransformStdout {
     
     
     
-    public void read(String filterId, int everyNthLine) throws Exception {
+    public void read(String transformId, int everyNthLine) throws Exception {
         
         //Map<String,List<PartitionInfo>> topics = consumer.listTopics();
        
@@ -76,14 +77,17 @@ public class KafkaTransformStdout {
 
         Transform transformer = null;
 
-        if (filterId.equalsIgnoreCase("faa-stream")) {
-            transformer = new TransformFaaStream();
-        } else if (filterId.equalsIgnoreCase("simFile")) {
-            transformer = new TransformSimFile();
-        } else if (filterId.equalsIgnoreCase("geotagSimFile")) {
-            transformer = new TransformGeotagSimFile();
-        }       
-        
+        Class<?> clazz = Class.forName(transformId);
+        transformer = (Transform) clazz.newInstance();
+
+//        if (transformId.equalsIgnoreCase("faa-stream")) {
+//            transformer = new TransformFaaStream();
+//        } else if (transformId.equalsIgnoreCase("simFile")) {
+//            transformer = new TransformSimFile();
+//        } else if (transformId.equalsIgnoreCase("geotagSimFile")) {
+//            transformer = new TransformGeotagSimFile();
+//        }
+//
         if (transformer == null) throw new Exception("Transformmer not defined");
         
         Long lr = System.currentTimeMillis();
@@ -112,7 +116,7 @@ public class KafkaTransformStdout {
             for (ConsumerRecord<String, String> record : records) {   
                 lr = System.currentTimeMillis();
                 
-                String lineOut = transformer.transform(record.value(), true);
+                String lineOut = transformer.transform(record.value());
                 if (cnt%everyNthLine == 0) {    
                     // Only print a message every 1000 times   
                     if (!lineOut.isEmpty()) {
@@ -126,7 +130,7 @@ public class KafkaTransformStdout {
                     st = System.currentTimeMillis();
                 }
             }
-            server.setCnt(cnt);
+            server.addCnt(cnt);
         }
     }
 
@@ -137,7 +141,7 @@ public class KafkaTransformStdout {
         int numArgs = args.length;
         
         if (numArgs != 6 && numArgs != 8) {
-            System.err.print("Usage: KafkaTransformStdout <broker-list> <topic> <group-id> <transform-id> <every-nth-line> <web-port> (<timeout-ms> <polling-interval-ms>)\n");
+            System.err.print("Usage: KafkaTransformStdout <broker-list-or-kafka-app-name> <topic> <group-id> <transform-class-name> <every-nth-line> <web-port> (<timeout-ms> <polling-interval-ms>)\n");
         } else {
             
             

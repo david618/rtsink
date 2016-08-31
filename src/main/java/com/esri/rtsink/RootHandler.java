@@ -1,5 +1,5 @@
 /*
-
+    Web Server Handler.  Originally tried handlers for each path; however, paths are handled as prefixes and that didn't work well.
 */
 package com.esri.rtsink;
 

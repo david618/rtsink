@@ -102,9 +102,6 @@ public class TransformSimFile implements Transform {
         return lineOut;
     }
     
-    @Override
-    public String transform(String line, boolean filter) {
-        return transform(line);
-    }    
+
     
 }

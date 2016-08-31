@@ -1,7 +1,5 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+Web Server allows for Marathon health check and also retrieval of counts.
  */
 package com.esri.rtsink;
 
@@ -39,10 +37,6 @@ public class WebServer {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
             server.createContext("/", new RootHandler());
-//            cntHandler = new CountHandler();
-//            server.createContext("/count", cntHandler);
-//            server.createContext("/ip", new GetIp());
-//            server.createContext("/reset", new ResetHandler());
             server.start();
 
         } catch (Exception e) {

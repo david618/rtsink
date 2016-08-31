@@ -12,7 +12,9 @@ import org.elasticsearch.spark.rdd.EsSpark
 
 /**
   * This Object listens to a Kafka topic and writes the CSV file to Elasticsearch
-  * The items are expected in simFile format
+  * ******************************************************
+  * WARNING:  The items are expected in simFile format
+  * ******************************************************
   */
 object CsvKafkaElasticsearch {
   def main(args: Array[String]) {
@@ -30,7 +32,7 @@ object CsvKafkaElasticsearch {
 
     if (numargs != 8) {
       System.err.println("Usage: CsvKafkaElasticsearch <kafka-brokers> <kafka-topic> <kafka-client-group-id> <esNodes> <clusterName> <indexName> <typeName>")
-      System.err.println("        kafka-brokers: Kafka Broker server port, e.g. localhost:9092")
+      System.err.println("        kafka-brokers: Kafka Broker server port, e.g. localhost:9092 or Kafka Marathon app name, e.g. hub2")
       System.err.println("          kafka-topic: Kafka Topic")
       System.err.println("kafka-client-group-id: Kafka Client Group ID")
       System.err.println("            esNode(s): elasticsearth server port, e.g. localhost:9200")
@@ -143,6 +145,9 @@ spark-submit --conf spark.executor.memory=4g --conf spark.cores.max=16 --conf es
 
 
 object JsonKafkaElasticsearch {
+  /*
+  Read lines from Kafka topic (expecting Json) to write to Elasticsearch
+   */
   def main(args: Array[String]) {
 
     println("START")
@@ -157,7 +162,7 @@ object JsonKafkaElasticsearch {
 
     if (numargs != 8) {
       System.err.println("Usage: JsonKafkaElasticsearch <kafka-brokers> <kafka-topic> <kafka-client-group-id> <esNodes> <clusterName> <indexName> <typeName>")
-      System.err.println("        kafka-brokers: Kafka Broker server port, e.g. localhost:9092")
+      System.err.println("        kafka-brokers: Kafka Broker server port, e.g. localhost:9092 or Kafka Marathon app name, e.g. hub2")
       System.err.println("          kafka-topic: Kafka Topic")
       System.err.println("kafka-client-group-id: Kafka Client Group ID")
       System.err.println("            esNode(s): elasticsearth server port, e.g. localhost:9200")

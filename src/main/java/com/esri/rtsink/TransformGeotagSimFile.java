@@ -1,7 +1,7 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+
+Reads simFile dat file (csv) converts to Json and checks agains specified fences inserting geotag information.
+
  */
 package com.esri.rtsink;
 
@@ -44,6 +44,7 @@ public class TransformGeotagSimFile implements Transform {
     String group;
     String fenceUrl;
     String fieldName;
+    boolean filter;
     Integer webport;
     WebServer server;
 
@@ -73,6 +74,8 @@ public class TransformGeotagSimFile implements Transform {
 
         this.fenceUrl = prop.getProperty("fenceUrl");
         this.fieldName = prop.getProperty("fieldName");
+        this.filter = prop.getProperty("filter").equalsIgnoreCase("true") ? true :false;
+
 
         System.out.println(this.fenceUrl);
         System.out.println(this.fieldName);
@@ -84,7 +87,7 @@ public class TransformGeotagSimFile implements Transform {
             e.printStackTrace();
         }
 
-        throw new Exception("TEST");
+
     }
 
    
@@ -213,18 +216,8 @@ public class TransformGeotagSimFile implements Transform {
     }
 
     
-    
-
-
     @Override
     public String transform(String line) {
-        String outLine = "";
-        return transform(line, false);
-    }
-    
-    
-    @Override
-    public String transform(String line, boolean filter) {
         String lineOut = "";
 
         // Load mapping here could come from config file or from web service
@@ -326,7 +319,7 @@ public class TransformGeotagSimFile implements Transform {
             String line = br.readLine();
             
             
-            String outLine = t.transform(line, true);
+            String outLine = t.transform(line);
             if (!outLine.isEmpty()) {
                 System.out.println(line);
                 System.out.println(outLine);

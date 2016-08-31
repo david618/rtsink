@@ -1,7 +1,7 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+
+Uses rest calls to Marathon to retrieve information about services.
+
  */
 package com.esri.rtsink;
 
@@ -24,11 +24,12 @@ import org.json.JSONObject;
 public class MarathonInfo {
 
 
-    public String getElasticSearchTransportAddresses(String esAppName) throws Exception {
+    public String getElasticSearchTransportAddresses(String esFrameworkName) throws Exception {
+        // Get the Transport Addresses for given Elasticsearch Framework Name (e.g. elasticsearch by default)
         String addresses = "";
 
         // Since no port was specified assume this is a hub name
-        String url = "http://leader.mesos/service/" + esAppName + "/v1/tasks";
+        String url = "http://leader.mesos/service/" + esFrameworkName + "/v1/tasks";
         //System.out.println(url);
 
         // Support for https
@@ -70,6 +71,8 @@ public class MarathonInfo {
     }
 
     public String getElasticSearchHttpAddresses(String esAppName) throws Exception {
+        // Get the Http Addresses for given Elasticsearch Framework Name (e.g. elasticsearch by default)
+
         String addresses = "";
 
         // Since no port was specified assume this is a hub name
@@ -115,7 +118,8 @@ public class MarathonInfo {
     }
 
     public String getElasticSearchClusterName(String esAppName) throws Exception {
-        // Default esAppName elasticsearch
+        // Get the Cluster Name for given Elasticsearch Framework Name (e.g. elasticsearch by default)
+
         String clusterName = "";
         // Since no port was specified assume this is a hub name
         String url = "http://leader.mesos/service/" + esAppName + "/v1/cluster";
@@ -168,6 +172,7 @@ public class MarathonInfo {
      * 
      */
     public String getBrokers(String kafkaName) throws Exception {
+        // Get brokers for Marathon Kafka Name (e.g. kafka by default)
         String brokers = "";
 
         // Since no port was specified assume this is a hub name
