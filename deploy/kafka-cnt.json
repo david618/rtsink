@@ -23,13 +23,6 @@
       "ignoreHttp1xx": false
     }
   ],
-  "portDefinitions": [
-    {
-      "port": 10003,
-      "protocol": "tcp",
-      "labels": {}
-    }
-  ],
   "uris": [
     "http://172.16.0.5/apps/jre-8u91-linux-x64.tar.gz",
     "http://172.16.0.5/apps/rtlib.tgz",
