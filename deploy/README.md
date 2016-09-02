@@ -8,7 +8,7 @@ The id must be lowercase
 ## cmd
 The $MESOS_SANDBOX is where the app can access contents it retrieves from "uris" below.
 
-Runs a Java comman to execute the class com.esri.rtsink.KafkaCnt
+Runs a Java command to execute the class com.esri.rtsink.KafkaCnt
 
 Parameters: 172.16.0.4:9092 simFile group1 $PORT0 true
 - 172.16.0.4:9092: is the ip:port of Kafka; this parameter could also be the name of the DCOS Kafka app in Marathon (e.g. hub2)
