@@ -1,10 +1,10 @@
-# Project Name
+# rtsink
 
-Test sinks for real time Mesos/Marathon apps.
+Test sinks for real time DCOS/Mesos/Marathon apps.
 
 ## Installation
 
-Created the projects in NetBeans 8.1.  You should be able to open and build easily from here.
+Java project. Orginally created in NetBeans 8.1. Also imported and built in IntelliJ.
 
 Tested with maven 3.3.9
 $ mvn install 
