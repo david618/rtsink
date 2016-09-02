@@ -10,12 +10,12 @@ The $MESOS_SANDBOX is where the app can access contents it retrieves from "uris"
 
 Runs a Java comman to execute the class com.esri.rtsink.KafkaCnt
 
-Parameters: 
-172.16.0.4:9092: is the ip:port of Kafka; this parameter could also be the name of the DCOS Kafka app in Marathon (e.g. hub2)
-simFile: topic name
-group1: Group ID for Kafka
-$PORT0: Use Marathon assigned port for health check; the app will also make results accessible on this port
-true: Optional parameter for testing latency.  Latency assumes CSV inputs and the last field is epoch time in milliseconds.
+Parameters: 172.16.0.4:9092 simFile group1 $PORT0 true
+- 172.16.0.4:9092: is the ip:port of Kafka; this parameter could also be the name of the DCOS Kafka app in Marathon (e.g. hub2)
+- simFile: topic name
+- group1: Group ID for Kafka
+- $PORT0: Use Marathon assigned port for health check; the app will also make results accessible on this port
+- true: Optional parameter for testing latency.  Latency assumes CSV inputs and the last field is epoch time in milliseconds.
 
 
 ## cpus, mem, and disk
