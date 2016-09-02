@@ -1,35 +1,37 @@
-# rtsink
+# Deploy instructions
 
-Test sinks for real time DCOS/Mesos/Marathon apps.
+The kafka-cnt.json file is an example Marathon configuration for this application.
 
-## Installation
+## id
+The id must be lowercase
 
-Java project. Orginally created in NetBeans 8.1. Also imported and built in IntelliJ.
+## cmd
+The $MESOS_SANDBOX is where the app can access contents it retrieves from "uris" below.
 
-Tested with maven 3.3.9
-$ mvn install 
+Runs a Java comman to execute the class com.esri.rtsink.KafkaCnt
 
-The target folder will contain:
-- lib folder: all of the jar depdencies
-- rtsink.jar: small executable jar (w/o dependencies)
-- rtsink-jar-with-dependencies.jar: larget executable jar with dependencies.
+Parameters: 
+172.16.0.4:9092: is the ip:port of Kafka; this parameter could also be the name of the DCOS Kafka app in Marathon (e.g. hub2)
+simFile: topic name
+group1: Group ID for Kafka
+$PORT0: Use Marathon assigned port for health check; the app will also make results accessible on this port
+true: Optional parameter for testing latency.  Latency assumes CSV inputs and the last field is epoch time in milliseconds.
 
-## Usage
 
-You can run them from the command line:
+## cpus, mem, and disk
+You may need to increase these. I originally started with low values; however, during testing the application failed. In Marathon I found an error about insufficent memory. 
 
-$ java -cp rtsink.jar com.esri.rtsink.KafkaCnt
+# constraints
+I have configured hostname:UNIQUE. This is not necessary for this sink; however, for testing I used this to keep multiple instances from running on same agent.
 
-Usage: rtsink <broker-list-or-hub-name> <topic> <group-id> <web-port>
+# healthChecks
+Looks for response on $PORT0. No resonse and Marathon will restart the application.
 
-$ java -cp rtsink.jar com.esri.rtsink.KafkaCnt rth simFile group1 14002
+# uris
+You'll need to put the JRE, libs, and rtsink jar on a web server that is accessible from the Marathon agent nodes.
 
-KafkaCnt connects to rth broker (deployed in DCOS) and consumes the simFile topic as group1.  It will read and count any records that show up on the topic. After a burst of inputs it prints the count and rate.  The count and rate are also available on the web-port. (http://localhost:14002/count).
-
-This app can also be ran in Mesos/Marathon.  http://davidssysadminnotes.blogspot.com/2016/08/performance-testing-kafka-on-dcos.html 
-
-Additional classes are in development (e.g. KafkaStdout, KafkaGeoFenceStdout)
-
-## License
-
-http://www.apache.org/licenses/LICENSE-2.0 
+"uris": [
+    "http://172.16.0.5/apps/jre-8u91-linux-x64.tar.gz",
+    "http://172.16.0.5/apps/rtlib.tgz",
+    "http://172.16.0.5/apps/rtsink.jar"
+  ]
