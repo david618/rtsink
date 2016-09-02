@@ -24,18 +24,20 @@ public class KafkaCnt {
     String topic;
     String group;
     Integer webport;
+    boolean calcLatency;
+
     WebServer server;
     
     static final Pattern PATTERN = Pattern.compile("(([^\"][^,]*)|\"([^\"]*)\"),?");
     
     KafkaConsumer<String, String> consumer;    
 
-    public KafkaCnt(String brokers, String topic, String group, Integer webport) {
+    public KafkaCnt(String brokers, String topic, String group, Integer webport, boolean calcLatency) {
         this.brokers = brokers;
         this.topic = topic;
         this.group = group;
         this.webport = webport;
-        
+        this.calcLatency = calcLatency;
         
         
         try {
@@ -73,6 +75,10 @@ public class KafkaCnt {
         Long st = System.currentTimeMillis();
         
         Long cnt = 0L;
+        Long sumLatencies = 0L;
+
+        boolean calcLaten = this.calcLatency;
+
         
         while (true) {
             ConsumerRecords<String,String> records = consumer.poll(10);
@@ -84,12 +90,25 @@ public class KafkaCnt {
                 
                 long delta = lr - st;
                 double rate = 1000.0 * (double) cnt / (double) delta;
-                System.out.println(cnt + "," + rate);
+
+                double avgLatency = (double) sumLatencies / (double) cnt;  // ms
+
+                if (calcLaten) {
+                    //System.out.println(cnt + "," + rate + "," + avgLatency);
+                    System.out.format("%d , %.0f , %.3f\n", cnt,rate,avgLatency);
+                } else {
+                    //System.out.println(cnt + "," + rate);
+                    System.out.format("%d , %.0f\n", cnt,rate);
+                }
+
                 
                 server.addRate(rate);
+                server.addLatency(avgLatency);
                 server.setTm(System.currentTimeMillis());
                 server.addCnt(cnt);
-                cnt = 0L;                
+                cnt = 0L;
+                sumLatencies = 0L;
+                calcLaten = this.calcLatency;
                 
                 
             }
@@ -99,7 +118,26 @@ public class KafkaCnt {
                 cnt += 1;      
                 if (cnt == 1) {
                     st = System.currentTimeMillis();
+
                 }
+                if (calcLaten) {
+                    try {
+                        String line = record.value();
+                        long tsent = Long.parseLong(line.substring(line.lastIndexOf(",") + 1));
+
+                        long trcvd = System.currentTimeMillis();
+
+                        sumLatencies += (trcvd - tsent);
+
+                    } catch (Exception e) {
+                        System.out.println("For Latency Calculations last field in CSV must be milliseconds from Epoch");
+                        calcLaten = false;
+                    }
+
+
+                }
+
+
             }
         }
     }
@@ -107,8 +145,10 @@ public class KafkaCnt {
     public static void main(String args[]) throws Exception {
           // Example Command Line Args: a1:9092 simFile group1 9001
 
-        if (args.length != 4) {
-            System.err.print("Usage: rtsink <broker-list-or-hub-name> <topic> <group-id> <web-port>\n");
+        int numargs = args.length;
+
+        if (numargs != 4 && numargs != 5) {
+            System.err.print("Usage: rtsink <broker-list-or-hub-name> <topic> <group-id> <web-port> (<calc-latency>)\n");
         } else {
             
             String brokers = args[0];
@@ -119,9 +159,15 @@ public class KafkaCnt {
                 // Try hub name. Name cannot have a ':' and brokers must have it.
                 brokers = new MarathonInfo().getBrokers(brokers);
             }   // Otherwise assume it's brokers 
-            
-            
-            KafkaCnt t = new KafkaCnt(brokers, args[1], args[2], Integer.parseInt(args[3]));
+
+            KafkaCnt t = null;
+
+            if (numargs == 4) {
+                t = new KafkaCnt(brokers, args[1], args[2], Integer.parseInt(args[3]), false);
+            } else {
+                t = new KafkaCnt(brokers, args[1], args[2], Integer.parseInt(args[3]),Boolean.parseBoolean(args[4]));
+            }
+
             t.read();
         }
 

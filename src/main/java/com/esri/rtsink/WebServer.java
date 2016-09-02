@@ -24,8 +24,12 @@ public class WebServer {
     
     public void addRate(double rate) {
         rootHandler.addRate(rate);
-    }    
-    
+    }
+
+    public void addLatency(double latency) {
+        rootHandler.addLatency(latency);
+    }
+
     public void setTm(long tm) {
         rootHandler.setTm(tm);
     }
