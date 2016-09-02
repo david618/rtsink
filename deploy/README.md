@@ -21,13 +21,13 @@ true: Optional parameter for testing latency.  Latency assumes CSV inputs and th
 ## cpus, mem, and disk
 You may need to increase these. I originally started with low values; however, during testing the application failed. In Marathon I found an error about insufficent memory. 
 
-# constraints
+## constraints
 I have configured hostname:UNIQUE. This is not necessary for this sink; however, for testing I used this to keep multiple instances from running on same agent.
 
-# healthChecks
+## healthChecks
 Looks for response on $PORT0. No resonse and Marathon will restart the application.
 
-# uris
+## uris
 You'll need to put the JRE, libs, and rtsink jar on a web server that is accessible from the Marathon agent nodes.
 
 "uris": [
