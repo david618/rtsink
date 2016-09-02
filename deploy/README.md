@@ -30,6 +30,8 @@ Looks for response on $PORT0. No resonse and Marathon will restart the applicati
 ## uris
 You'll need to put the JRE, libs, and rtsink jar on a web server that is accessible from the Marathon agent nodes.
 
+Created a tgz for lib folder in target. Ran this command "tar cvzf rtlib.gz lib" in the target folder and uploaded the resulting rtlib.gz to the web server. Using a separate file makes it very easy to patch the app. The rtsink.jar is very small (e.g. 76K) and can uploaded quickly and the app restarted.  You could use rtsink-jar-with-dependencies.jar; however, the file includes all of the libs (e.g. 126MB) and take longer to upload. If you add a new lib(s) you'll need to update the rtlib.gz file.
+
 "uris": [
     "http://172.16.0.5/apps/jre-8u91-linux-x64.tar.gz",
     "http://172.16.0.5/apps/rtlib.tgz",
