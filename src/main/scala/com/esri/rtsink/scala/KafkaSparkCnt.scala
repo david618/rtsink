@@ -23,8 +23,8 @@ object KafkaSparkCnt {
 
     // example: a1:9092 simFile2 group3 a2:9200 elasticsearch simulator simfile2 1 14004
 
-    if (numargs != 5) {
-      System.err.println("Usage: JsonKafkaElasticsearch <kafka-brokers-or-hub> <kafka-topic> <kafka-client-group-id> <webport>")
+    if (numargs != 4) {
+      System.err.println("Usage: KafkaSparkCnt <kafka-brokers-or-hub> <kafka-topic> <kafka-client-group-id> <emitInterval-sec> <webport>")
       System.err.println("        kafka-brokers: Kafka Broker server port, e.g. localhost:9092")
       System.err.println("          kafka-topic: Kafka Topic")
       System.err.println("kafka-client-group-id: Kafka Client Group ID")

@@ -77,19 +77,17 @@ public class KafkaTransformStdout {
 
         Transform transformer = null;
 
-        Class<?> clazz = Class.forName(transformId);
-        transformer = (Transform) clazz.newInstance();
+        if (transformId.equalsIgnoreCase("NOOP")) {
+            transformer = null;
+        } else {
+            Class<?> clazz = Class.forName(transformId);
+            transformer = (Transform) clazz.newInstance();
 
-//        if (transformId.equalsIgnoreCase("faa-stream")) {
-//            transformer = new TransformFaaStream();
-//        } else if (transformId.equalsIgnoreCase("simFile")) {
-//            transformer = new TransformSimFile();
-//        } else if (transformId.equalsIgnoreCase("geotagSimFile")) {
-//            transformer = new TransformGeotagSimFile();
-//        }
-//
-        if (transformer == null) throw new Exception("Transformmer not defined");
-        
+            if (transformer == null) throw new Exception("Transformmer not defined");
+
+        }
+
+
         Long lr = System.currentTimeMillis();
         Long st = System.currentTimeMillis();
 
@@ -109,14 +107,21 @@ public class KafkaTransformStdout {
                 double rate = 1000.0 * (double) cnt / (double) delta;
                 System.out.println(cnt + "," + rate);
                 
+
+                server.addCnt(cnt);
+                server.addRate(rate);
                 cnt = 0L;
-                //server.setCnt(cnt);
+
             }
             
             for (ConsumerRecord<String, String> record : records) {   
                 lr = System.currentTimeMillis();
-                
-                String lineOut = transformer.transform(record.value());
+
+                String lineOut = record.value();
+                if (transformer != null) {
+                    lineOut = transformer.transform(record.value());
+                }
+
                 if (cnt%everyNthLine == 0) {    
                     // Only print a message every 1000 times   
                     if (!lineOut.isEmpty()) {
@@ -130,7 +135,7 @@ public class KafkaTransformStdout {
                     st = System.currentTimeMillis();
                 }
             }
-            server.addCnt(cnt);
+            //server.addCnt(cnt);
         }
     }
 
