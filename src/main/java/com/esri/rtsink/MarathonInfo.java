@@ -172,7 +172,6 @@ public class MarathonInfo {
      * 
      */
     public String getBrokers(String kafkaName) throws Exception {
-        // Get brokers for Marathon Kafka Name (e.g. kafka by default)
         String brokers = "";
 
         // Since no port was specified assume this is a hub name
@@ -206,41 +205,55 @@ public class MarathonInfo {
         JSONArray tasks = app.getJSONArray("tasks");
         JSONObject task = tasks.getJSONObject(0);
         JSONArray ports = task.getJSONArray("ports");
-        Integer port = ports.getInt(0);
-        System.out.println(port);
-
-        // Now get brokers from service
-        url = "http://" + kafkaName + ".marathon.mesos:" + String.valueOf(port) + "/v1/connection";
-
-        System.out.println(url);
         
-        request = new HttpGet(url);
-
-        response = httpclient.execute(request);
-        rd = new BufferedReader(
-                new InputStreamReader(response.getEntity().getContent()));
-
-        result = new StringBuffer();
-        line = "";
-        while ((line = rd.readLine()) != null) {
-            result.append(line);
-        }
-
-        
-        System.out.println(result);
-        json = new JSONObject(result.toString());
-
-        JSONArray addresses = json.getJSONArray("address");
-
+        int k = 0;
         brokers = "";
-        for (int i = 0; i < addresses.length(); i++) {
-            if (i > 0) {
-                brokers += ",";
-            }
-            brokers += addresses.getString(i);
-        }
+        
+        while (k < ports.length() && brokers.isEmpty() ) {
+            try {               
+            
+                Integer port = ports.getInt(k);
+                System.out.println(port);
+                
+                k++;
 
-        System.out.println(brokers);
+                // Now get brokers from service
+                url = "http://" + kafkaName + ".marathon.mesos:" + String.valueOf(port) + "/v1/connection";
+
+                System.out.println(url);
+
+                request = new HttpGet(url);
+
+                response = httpclient.execute(request);
+                rd = new BufferedReader(
+                        new InputStreamReader(response.getEntity().getContent()));
+
+                result = new StringBuffer();
+                line = "";
+                while ((line = rd.readLine()) != null) {
+                    result.append(line);
+                }
+
+
+                System.out.println(result);
+                json = new JSONObject(result.toString());
+
+                JSONArray addresses = json.getJSONArray("address");
+
+                for (int i = 0; i < addresses.length(); i++) {
+                    if (i > 0) {
+                        brokers += ",";
+                    }
+                    brokers += addresses.getString(i);
+                }
+
+                System.out.println(brokers);
+            } catch (Exception e) {
+                brokers = "";
+            }
+            
+        }
+        
 
         return brokers;
     }
