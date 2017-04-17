@@ -1,3 +1,9 @@
+# Retired
+
+This project as merged with rsource and development will continue under name [rt](https://github.com/david618/rt/).
+
+
+
 # rtsink
 
 Test sinks for real time DCOS/Mesos/Marathon apps.
